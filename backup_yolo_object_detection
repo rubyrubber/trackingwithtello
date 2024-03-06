@@ -1,0 +1,71 @@
+import sys
+
+sys.path.append("yolo")
+
+import torch
+from PIL import Image, ImageDraw
+from yolo.models.experimental import attempt_load
+from yolo.utils.general import non_max_suppression
+from torchvision import transforms
+
+# from yolo.utils.torch_utils import select_device
+
+# 设置使用的设备（GPU或CPU）
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')  # 让 PyTorch 自动选择可用的 GPU
+
+# 加载预训练的 YOLOv5 模型
+weights_path = 'D:/Desktop/tello/my_first_project/yolo/yolov5s.pt'
+model = attempt_load(weights_path)
+model.eval()
+
+# 读取待检测的图片
+img_path = 'D:/Desktop/tello/my_first_project/testimg/test1.jpg'
+input_img = Image.open(img_path).convert('RGB')
+# 调整输入图像大小为模型期望的大小
+input_img = input_img.resize((640, 640))
+
+# 将图像转换为张量
+img_transform = transforms.Compose([transforms.ToTensor()])
+img_tensor = img_transform(input_img).unsqueeze(0).to(device)
+img_tensor = img_tensor.to(device)
+
+# 进行推理
+with torch.no_grad():
+    pred = model(img_tensor)
+
+# 进行非极大值抑制（NMS）处理
+pred = non_max_suppression(pred, conf_thres=0.3, iou_thres=0.3)[0]
+
+# 绘制框和保存结果
+draw = ImageDraw.Draw(input_img)
+for det in pred:
+    if det is not None and len(det) > 0:
+        # 遍历每个检测结果
+        for detection in reversed(det):
+            if torch.is_tensor(detection) and detection.numel() > 0:
+                # 如果是张量且不是0维的张量，进行迭代
+                if detection.dim() == 1:  # 检查张量维度
+                    xyxy = [detection[0].item(), detection[1].item(), detection[2].item(), detection[3].item()]  # 将坐标转换为列表
+                else:
+                    xyxy = detection[:4].cpu().numpy() if detection.dim() > 0 else detection.cpu().numpy()  # 将坐标转换为NumPy数组
+
+                # 确保 xyxy 是一个包含坐标的数组
+                if hasattr(xyxy, 'shape') and len(xyxy.shape) >= 1 and xyxy.shape[0] >= 4:
+                    # 修正坐标值范围，确保在图像内
+                    xyxy[0] = max(0, xyxy[0])
+                    xyxy[1] = max(0, xyxy[1])
+                    xyxy[2] = min(input_img.width, xyxy[2])
+                    xyxy[3] = min(input_img.height, xyxy[3])
+                    # 绘制框
+                    draw.rectangle(xyxy, outline='red', width=10)
+
+                    # 在框上方显示类别和置信度
+                    conf = detection[4].item()
+                    cls = detection[5].item()
+                    label = f'{model.names[int(cls)]}: {conf:.2f}'
+                    draw.text((xyxy[0], xyxy[1]), label, fill='red')
+
+
+# 保存结果图片
+output_path = 'D:/Desktop/tello/my_first_project/testimgoutput/testoutput5.jpg'
+input_img.save(output_path)

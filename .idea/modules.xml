@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/../github_examples/.idea/github_examples.iml" filepath="$PROJECT_DIR$/../github_examples/.idea/github_examples.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../tello_object_tracking-master/.idea/tello_object_tracking-master.iml" filepath="$PROJECT_DIR$/../tello_object_tracking-master/.idea/tello_object_tracking-master.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/trails.iml" filepath="$PROJECT_DIR$/.idea/trails.iml" />
+    </modules>
+  </component>
+</project>
